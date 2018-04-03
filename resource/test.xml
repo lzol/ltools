@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <field name="F1">
+        <begin>1</begin>
+        <length>2</length>
+    </field>
+    <field name="F2">
+        <begin>11</begin>
+        <length>2</length>
+    </field>
+</root>
