@@ -65,6 +65,11 @@ func StringFill(inputStr string,iType int,fillStr string,destLength int)(outStr 
 	return outStr,nil
 }
 
+func GetGBKLength(inputStr string)(length int){
+	str := Encode(inputStr,UTF8,GBK)
+	return len([]byte(str))
+}
+
 //获取字符串真实长度，Go中string为UTF-8存储，len（）获取的长度不准确(按照汉字占2位计算)
 func GetRealLength(inputStr string)(length int){
 	sl := 0
@@ -107,26 +112,6 @@ func SubString(inputStr string,begin int,length int)(outputStr string,err error)
 
 
 
-//func SubString(s string, l int) string {
-//	if len(s) <= l {
-//		return s
-//	}
-//	ss, sl, rl, rs := "", 0, 0, []rune(s)
-//	for _, r := range rs {
-//		rint := int(r)
-//		if rint < 128 {
-//			rl = 1
-//		} else {
-//			rl = 2
-//		}
-//		if sl + rl > l {
-//			break
-//		}
-//		sl += rl
-//		ss += string(r)
-//	}
-//	return ss
-//}
 
 //将数字字符串转换为银联数据金额类型（12位，无小数点）
 func ConvertToUDAmount(input string)(sAmount string,err error){
