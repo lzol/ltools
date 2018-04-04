@@ -2,24 +2,25 @@ package util
 
 import (
 	"github.com/axgle/mahonia"
-	"golang.org/x/text/encoding/simplifiedchinese"
 	"errors"
 	"strings"
 	"strconv"
 )
 
 const (
-	UTF8    = "utf-8"
-	GBK     = "gbk"
-	GB18030 = "gb18030"
+	UTF8    = "UTF-8"
+	GBK     = "GBK"
+	GB18030 = "GB18030"
 )
 
 /*
   字符串编码转换
 */
 func Encode(input string, oriCode string, tarCode string) (output string) {
-	oriEnc := mahonia.NewEncoder(oriCode)
+	//首先将原字符解码成UTF-8格式，即go默认格式
+	oriEnc := mahonia.NewDecoder(oriCode)
 	oriStr := oriEnc.ConvertString(input)
+	//再转换成新格式
 	tarEnc := mahonia.NewEncoder(tarCode)
 	output = tarEnc.ConvertString(oriStr)
 	return output
@@ -79,26 +80,53 @@ func GetRealLength(inputStr string)(length int){
 	return sl
 }
 
-func SubString(s string, l int) string {
-	if len(s) <= l {
-		return s
+/*
+   截取字符串指定位置子串，长度按照汉字占两位计算
+ */
+func SubString(inputStr string,begin int,length int)(outputStr string,err error){
+	realLen := GetRealLength(inputStr)
+	if begin >= realLen{
+		return "",errors.New("起始位置越界")
 	}
-	ss, sl, rl, rs := "", 0, 0, []rune(s)
+	if length-begin >= realLen{
+		length = realLen-begin
+	}
+	sl := 0
+	rs := []rune(inputStr)
 	for _, r := range rs {
 		rint := int(r)
 		if rint < 128 {
-			rl = 1
+			sl++
 		} else {
-			rl = 2
+			sl += 2
 		}
-		if sl + rl > l {
-			break
-		}
-		sl += rl
-		ss += string(r)
 	}
-	return ss
+	return outputStr,nil
+
 }
+
+
+
+//func SubString(s string, l int) string {
+//	if len(s) <= l {
+//		return s
+//	}
+//	ss, sl, rl, rs := "", 0, 0, []rune(s)
+//	for _, r := range rs {
+//		rint := int(r)
+//		if rint < 128 {
+//			rl = 1
+//		} else {
+//			rl = 2
+//		}
+//		if sl + rl > l {
+//			break
+//		}
+//		sl += rl
+//		ss += string(r)
+//	}
+//	return ss
+//}
 
 //将数字字符串转换为银联数据金额类型（12位，无小数点）
 func ConvertToUDAmount(input string)(sAmount string,err error){
