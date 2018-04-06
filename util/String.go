@@ -96,9 +96,14 @@ func SubString(inputStr string,begin int,end int)(outputStr string,err error){
 	if end-begin >= realLen || end > realLen{
 		end = realLen-begin
 	}
+
 	str := Encode(inputStr,UTF8,GBK)
 	strByte := []byte(str)
-	outputStr = string(strByte[begin:end])
+	if begin==end{
+		outputStr = string(strByte[begin])
+	}else{
+		outputStr = string(strByte[begin:end])
+	}
 	outputStr = Encode(outputStr,GBK,UTF8)
 	return outputStr,nil
 
