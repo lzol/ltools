@@ -88,24 +88,18 @@ func GetRealLength(inputStr string)(length int){
 /*
    截取字符串指定位置子串，长度按照汉字占两位计算
  */
-func SubString(inputStr string,begin int,length int)(outputStr string,err error){
-	realLen := GetRealLength(inputStr)
+func SubString(inputStr string,begin int,end int)(outputStr string,err error){
+	realLen := GetGBKLength(inputStr)
 	if begin >= realLen{
 		return "",errors.New("起始位置越界")
 	}
-	if length-begin >= realLen{
-		length = realLen-begin
+	if end-begin >= realLen || end > realLen{
+		end = realLen-begin
 	}
-	sl := 0
-	rs := []rune(inputStr)
-	for _, r := range rs {
-		rint := int(r)
-		if rint < 128 {
-			sl++
-		} else {
-			sl += 2
-		}
-	}
+	str := Encode(inputStr,UTF8,GBK)
+	strByte := []byte(str)
+	outputStr = string(strByte[begin:end])
+	outputStr = Encode(outputStr,GBK,UTF8)
 	return outputStr,nil
 
 }
