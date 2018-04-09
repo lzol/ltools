@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+<<<<<<< HEAD
 	"reflect"
 	"ltools/util"
 )
@@ -50,3 +51,15 @@ func ttt(t interface{}){
 
 	fmt.Println(t)
 }
+=======
+	"ltools/util"
+)
+
+func main(){
+	params := []string{"-ltr","-a"}
+	line,err := util.ExecCommand("ls",params,true)
+	fmt.Println(line,err)
+	err = util.ImportBigData("/Volumes/Share/tmp/outTest.csv","/Volumes/Share/tmp/testDB","TEST")
+	fmt.Println(err)
+}
+>>>>>>> 3f9cd45432665067fc79eb4bccdfcff524ad9e0c
