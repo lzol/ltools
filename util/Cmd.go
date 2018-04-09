@@ -5,19 +5,23 @@ import (
 	"os/exec"
 	"io"
 	"bytes"
+	"fmt"
 )
 
 func ExecCommand(commandName string, params []string, needResult bool) (result string, err error) {
 	cmd := exec.Command(commandName, params...)
-
+	fmt.Println(commandName)
 	stdout, err := cmd.StdoutPipe()
 	defer stdout.Close()
 	if err != nil {
 		return result, err
 	}
-
-	cmd.Start()
-
+	err = cmd.Start()
+	fmt.Println(cmd.ProcessState)
+	if err!=nil{
+		fmt.Println(err)
+		return result,err
+	}
 	reader := bufio.NewReader(stdout)
 	var buffer bytes.Buffer
 
