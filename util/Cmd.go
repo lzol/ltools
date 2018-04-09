@@ -11,7 +11,7 @@ func ExecCommand(commandName string, params []string, needResult bool) (result s
 	cmd := exec.Command(commandName, params...)
 
 	stdout, err := cmd.StdoutPipe()
-
+	defer stdout.Close()
 	if err != nil {
 		return result, err
 	}
