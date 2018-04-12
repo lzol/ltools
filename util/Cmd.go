@@ -3,9 +3,9 @@ package util
 import (
 	"bufio"
 	"os/exec"
-	"io"
 	"bytes"
 	"fmt"
+	"io"
 )
 
 func ExecCommand(commandName string, params []string, needResult bool) (result string, err error) {
@@ -26,15 +26,16 @@ func ExecCommand(commandName string, params []string, needResult bool) (result s
 	//实时循环读取输出流中的一行内容
 	if needResult {
 		for {
-			line, err2 := reader.ReadString('\n')
-			buffer.WriteString(line)
-			if err2 != nil && io.EOF != err2 {
+			line, _,err2 := reader.ReadLine()
+			fmt.Println("line",string(line),err2)
+			buffer.WriteString(string(line))
+			if err2 != nil && err2!=io.EOF{
 				return result, err2
 				break
 			}
-			if io.EOF == err2 {
-				break
-			}
+			//if io.EOF == err2 {
+			//	break
+			//}
 		}
 	}
 	cmd.Wait()
