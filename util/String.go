@@ -102,7 +102,8 @@ func SubString(inputStr string,begin int,end int)(outputStr string,err error){
 	if begin==end{
 		outputStr = string(strByte[begin])
 	}else{
-		outputStr = string(strByte[begin:end])
+		//切片是左闭右开，故需要end+1
+		outputStr = string(strByte[begin:end+1])
 	}
 	outputStr = Encode(outputStr,GBK,UTF8)
 	return outputStr,nil
