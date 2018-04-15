@@ -6,12 +6,10 @@ import (
 	"bytes"
 	"io"
 	"github.com/pkg/errors"
-	"fmt"
 )
 
 func ExecCommand(commandName string, params []string, needResult bool) (result string, err error) {
 	cmd := exec.Command(commandName, params...)
-	fmt.Println(cmd)
 	stdout, err := cmd.StdoutPipe()
 	defer stdout.Close()
 	if err != nil {

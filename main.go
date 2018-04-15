@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"bytes"
 	"ltools/util"
+	"strings"
 )
 
 func main() {
@@ -35,6 +36,13 @@ func main() {
 	result,err := util.ImportBigData("/Users/liuz/Library/Android/sdk/platform-tools/sqlite3","/Volumes/Share/GOPATH/src/duizhang/csv/aceve.csv", "/Volumes/Share/GOPATH/src/duizhang/data/duizhang", "t_aceve")
 	//result,err := util.ImportBigData("D://Program//sqlite-tools-win32-x86-3230000//sqlite3","e://GOPATH//src//duizhang//csv//aceve.csv", "e://GOPATH//src//duizhang//data//duizhang", "t_aceve")
 	fmt.Printf("result:[%s] err:[%v]\n",result,err)
+	fmt.Println("go"=="go")
+	fmt.Println("GO"=="go")
+
+	fmt.Println(strings.Compare("GO","go"))
+	fmt.Println(strings.Compare("go","go"))
+
+	fmt.Println(strings.EqualFold("GO","go"))
 
 	//result,err = util.ExecCommand("cmd",[]string{"/C","dir"},true)
 	//fmt.Println(util.Encode(result,util.GBK,util.UTF8),err)
