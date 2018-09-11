@@ -61,8 +61,12 @@ func ListDir(dirPth string, suffix string) (files []string, err error) {
 		if fi.IsDir() { // 忽略目录
 			continue
 		}
-		if strings.HasSuffix(strings.ToUpper(fi.Name()), suffix) { //匹配文件
-			files = append(files, dirPth+PthSep+fi.Name())
+		tmp := strings.ToUpper(fi.Name())
+		if strings.HasSuffix(tmp, suffix) { //匹配文件
+			//去掉MAC系统中生成的._文件
+			if !strings.HasPrefix(tmp,"._") {
+				files = append(files, dirPth+PthSep+fi.Name())
+			}
 		}
 	}
 	return files, nil
@@ -78,8 +82,12 @@ func WalkDir(dirPth, suffix string) (files []string, err error) {
 		if fi.IsDir() { // 忽略目录
 			return nil
 		}
-		if strings.HasSuffix(strings.ToUpper(fi.Name()), suffix) {
-			files = append(files, filename)
+		tmp := strings.ToUpper(fi.Name())
+		if strings.HasSuffix(tmp, suffix) {
+			//去掉MAC系统中生成的._文件
+			if !strings.HasPrefix(tmp,"._"){
+				files = append(files, filename)
+			}
 		}
 		return nil
 	})
