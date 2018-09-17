@@ -4,6 +4,7 @@ import (
 	_ "database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"fmt"
+	"ltools/util"
 	_ "ltools/util"
 	"os/exec"
 	"bytes"
@@ -46,9 +47,13 @@ func main() {
 
 	//result,err = util.ExecCommand("cmd",[]string{"/C","dir"},true)
 	//fmt.Println(util.Encode(result,util.GBK,util.UTF8),err)
-	s := "0305-ACEVE-20180416"
-	s1 := s[len(s)-8:len(s)]
-	fmt.Println(s1)
+	//s := "0305-ACEVE-20180416"
+	//s1 := s[len(s)-8:len(s)]
+	//fmt.Println(s1)
+	uuid,_ := util.GetUUID()
+	fmt.Println(uuid)
+	uuid,_ = util.Get32UUID()
+	fmt.Println(uuid)
 }
 func exec_shell(s string) {
 	cmd := exec.Command("/bin/sh", s)
