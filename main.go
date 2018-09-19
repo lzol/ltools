@@ -1,15 +1,15 @@
 package main
 
 import (
-	_ "database/sql"
-	_ "github.com/mattn/go-sqlite3"
-	"fmt"
-	"ltools/util"
-	_ "ltools/util"
-	"os/exec"
 	"bytes"
-	_"ltools/util"
-	_"strings"
+	_ "database/sql"
+	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/streadway/amqp"
+	_ "ltools/util"
+	"ltools/util/amqp"
+	"os/exec"
+	_ "strings"
 )
 
 func main() {
@@ -50,11 +50,32 @@ func main() {
 	//s := "0305-ACEVE-20180416"
 	//s1 := s[len(s)-8:len(s)]
 	//fmt.Println(s1)
-	uuid,_ := util.GetUUID()
-	fmt.Println(uuid)
-	uuid,_ = util.Get32UUID()
-	fmt.Println(uuid)
+	//uuid,_ := util.GetUUID()
+	//fmt.Println(uuid)
+	//uuid,_ = util.Get32UUID()
+	//fmt.Println(uuid)
+	exchange := new(util.Exchange)
+	exchange.Name = "test"
+	exchange.Type = util.EXCHANGE_TYPE_DIRECT
+	exchange.Durable = true
+	queue := new(util.Queue)
+	queue.Name = "test"
+	queue.Durable = true
+	amqp := new(util.Amqp)
+	amqp.URI = "amqp://guest:guest@localhost:5672/"
+	amqp.Queue = *queue
+	amqp.Exchange = *exchange
+	defer amqp.Close()
+	amqp.Public("sfdljdsfldsjfls")
+	fmt.Println("发布队列消息：sfdljdsfldsjfls")
+	amqp.Consume(OnReceive)
+
 }
+
+func OnReceive(d amqp.Delivery){
+	fmt.Println("收到队列消息：",string(d.Body))
+}
+
 func exec_shell(s string) {
 	cmd := exec.Command("/bin/sh", s)
 	var out bytes.Buffer
