@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"log"
+	"time"
+	"golang.org/x/net/context"
 )
 
 type receive func(d amqp.Delivery)
@@ -34,8 +36,8 @@ type Exchange struct {
 }
 
 type Queue struct {
-	Name       string     //queue name
-	BindKey    string     //queue binding key
+	Name    string //queue name
+	BindKey string //queue binding key
 
 	Passive    bool       //queue passive
 	Durable    bool       //queue durable
@@ -43,6 +45,63 @@ type Queue struct {
 	AutoDelete bool       //queue autodelete
 	NoWait     bool       //queue nowait
 	Arguments  amqp.Table //queue arguments
+}
+
+func (a *Amqp)init(){
+	log.Println("开启重新连接机制")
+	forever := make(chan bool)
+	for ;; {
+		go func() {
+			if a.conn == nil{
+				log.Println("MQ connection lost,reconnect")
+				a.connect()
+			}
+
+		}()
+		time.Sleep(time.Second*3)
+	}
+	<-forever
+}
+
+func redial(ctx context.Context, url string) chan chan session {
+	sessions := make(chan chan session)
+
+	go func() {
+		sess := make(chan session)
+		defer close(sessions)
+
+		for {
+			select {
+			case sessions <- sess:
+			case <-ctx.Done():
+				log.Println("shutting down session factory")
+				return
+			}
+
+			conn, err := amqp.Dial(url)
+			if err != nil {
+				log.Fatalf("cannot (re)dial: %v: %q", err, url)
+			}
+
+			ch, err := conn.Channel()
+			if err != nil {
+				log.Fatalf("cannot create channel: %v", err)
+			}
+
+			if err := ch.ExchangeDeclare(exchange, "fanout", false, true, false, false, nil); err != nil {
+				log.Fatalf("cannot declare fanout exchange: %v", err)
+			}
+
+			select {
+			case sess <- session{conn, ch}:
+			case <-ctx.Done():
+				log.Println("shutting down new session")
+				return
+			}
+		}
+	}()
+
+	return sessions
 }
 
 func (a *Amqp) connect() {
@@ -63,7 +122,7 @@ func (a *Amqp) connect() {
 	log.Println("connect to MQ:", a.URI, " success")
 }
 
-func (a *Amqp)Close(){
+func (a *Amqp) Close() {
 	a.conn.Close()
 }
 
@@ -164,10 +223,10 @@ func (a *Amqp) Public(msg string) (err error) {
 	defer confirmOne(confirms)
 
 	if err = channel.Publish(
-		a.Exchange.Name,   // publish to an exchange
+		a.Exchange.Name,       // publish to an exchange
 		a.Exchange.RoutingKey, // routing to 0 or more queues
-		false,      // mandatory
-		false,      // immediate
+		false,                 // mandatory
+		false,                 // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",
