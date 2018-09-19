@@ -1,4 +1,4 @@
-package amqp
+package util
 
 import (
 	"github.com/streadway/amqp"
@@ -16,7 +16,7 @@ type Amqp struct {
 }
 
 type Exchange struct {
-	Exchange   string     //exchange name
+	Name       string     //exchange name
 	Type       string     //exchange type
 	Passive    bool       //exchange passive
 	Durable    bool       //exchange durable
@@ -27,7 +27,7 @@ type Exchange struct {
 }
 
 type Queue struct {
-	Queue      string     //queue name
+	Name       string     //queue name
 	Passive    bool       //queue passive
 	Durable    bool       //queue durable
 	Exclusive  bool       //queue exclusive
@@ -40,6 +40,12 @@ func(a *Amqp) connect() {
 	if a.URI == ""{
 		log.Println("connect to MQ error:URI is empty")
 	}
+	if a.Exchange.Name == ""{
+		log.Println("connect to MQ error:Exchange Name is empty")
+	}
+	if a.Queue.Name == ""{
+		log.Println("connect to MQ error:Queue Name is empty")
+	}
 	conn, err := amqp.Dial(a.URI)
 	if err!=nil {
 		log.Println("connect to MQ error:",err)
@@ -48,7 +54,7 @@ func(a *Amqp) connect() {
 	defer a.conn.Close()
 }
 
-func (a *Amqp)Consume(f receive,queue Queue){
+func (a *Amqp)Consume(f receive){
 	if a.conn == nil{
 		a.connect()
 	}
