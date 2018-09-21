@@ -5,7 +5,6 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"time"
-	"golang.org/x/net/context"
 )
 
 type receive func(d amqp.Delivery)
@@ -15,6 +14,8 @@ type Amqp struct {
 	Exchange Exchange
 	Queue    Queue
 	conn     *amqp.Connection
+	channel  *amqp.Channel
+	ReconnectInternal int64	//reconnect when MQ lost,unit second
 }
 
 // direct|fanout|topic|x-custom
@@ -47,64 +48,45 @@ type Queue struct {
 	Arguments  amqp.Table //queue arguments
 }
 
-func (a *Amqp)init(){
-	log.Println("开启重新连接机制")
-	forever := make(chan bool)
-	for ;; {
-		go func() {
-			if a.conn == nil{
-				log.Println("MQ connection lost,reconnect")
-				a.connect()
-			}
-
-		}()
-		time.Sleep(time.Second*3)
+func (a *Amqp) getChannel() (*amqp.Channel, error) {
+	err := a.connect()
+	if err != nil {
+		return nil, err
 	}
-	<-forever
+
+	channel, err := a.conn.Channel()
+	if err != nil {
+		log.Println("open channel fail:", err)
+	}
+
+	err = channel.ExchangeDeclare(
+		a.Exchange.Name,       // name of the exchange
+		a.Exchange.Type,       // type
+		a.Exchange.Durable,    // durable
+		a.Exchange.AutoDelete, // delete when complete
+		a.Exchange.Internal,   // internal
+		a.Exchange.NoWait,     // noWait
+		a.Exchange.Arguments,              // arguments
+	)
+	if err != nil {
+		log.Println("Exchange Declare: %s", err)
+	}
+
+	_, err = channel.QueueDeclare(
+		a.Queue.Name,       // name of the queue
+		a.Queue.Durable,    // durable
+		a.Queue.AutoDelete, // delete when unused
+		a.Queue.Exclusive,  // exclusive
+		a.Queue.NoWait,     // noWait
+		a.Queue.Arguments,                // arguments
+	)
+	if err != nil {
+		log.Println("Queue Declare: %s", err)
+	}
+	return channel, err
 }
 
-func redial(ctx context.Context, url string) chan chan session {
-	sessions := make(chan chan session)
-
-	go func() {
-		sess := make(chan session)
-		defer close(sessions)
-
-		for {
-			select {
-			case sessions <- sess:
-			case <-ctx.Done():
-				log.Println("shutting down session factory")
-				return
-			}
-
-			conn, err := amqp.Dial(url)
-			if err != nil {
-				log.Fatalf("cannot (re)dial: %v: %q", err, url)
-			}
-
-			ch, err := conn.Channel()
-			if err != nil {
-				log.Fatalf("cannot create channel: %v", err)
-			}
-
-			if err := ch.ExchangeDeclare(exchange, "fanout", false, true, false, false, nil); err != nil {
-				log.Fatalf("cannot declare fanout exchange: %v", err)
-			}
-
-			select {
-			case sess <- session{conn, ch}:
-			case <-ctx.Done():
-				log.Println("shutting down new session")
-				return
-			}
-		}
-	}()
-
-	return sessions
-}
-
-func (a *Amqp) connect() {
+func (a *Amqp) connect() (err error) {
 	if a.URI == "" {
 		log.Println("connect to MQ error:URI is empty")
 	}
@@ -119,7 +101,11 @@ func (a *Amqp) connect() {
 		log.Println("connect to MQ error:", err)
 	}
 	a.conn = conn
-	log.Println("connect to MQ:", a.URI, " success")
+
+	if err == nil {
+		log.Println("connect to MQ:", a.URI, " success")
+	}
+	return err
 }
 
 func (a *Amqp) Close() {
@@ -127,87 +113,57 @@ func (a *Amqp) Close() {
 }
 
 func (a *Amqp) Consume(f receive) {
-	if a.conn == nil {
-		a.connect()
+RECONNECT:
+	for {
+		channel, err := a.getChannel()
+		if err != nil {
+			log.Println("connect to MQ error,reconnect")
+			time.Sleep(time.Duration(a.ReconnectInternal)*time.Second)
+			continue RECONNECT
+		}
+		a.channel = channel
+
+		if a.channel != nil {
+			msgs, err := a.channel.Consume(
+				a.Queue.Name, // name
+				"",           // consumerTag,
+				true,         // noAck
+				false,        // exclusive
+				false,        // noLocal
+				false,        // noWait
+				nil,          // arguments
+			)
+			if err != nil {
+				log.Println("Queue Consume: %s", err)
+			}
+			forever := make(chan bool)
+			for {
+				msg, ok := <-msgs
+				if !ok {
+					continue RECONNECT
+				}
+				go f(msg)
+			}
+			<-forever
+		}
+		defer a.Close()
 	}
-	defer a.conn.Close()
-	channel, err := a.conn.Channel()
+}
+
+func (a *Amqp) Public(msg string) (err error) {
+	channel, err := a.getChannel()
 	if err != nil {
-		log.Println("open channel fail:", err)
+		return fmt.Errorf("Channel: %s", err)
 	}
 
-	err = channel.ExchangeDeclare(
+	if err := channel.ExchangeDeclare(
 		a.Exchange.Name,       // name of the exchange
 		a.Exchange.Type,       // type
 		a.Exchange.Durable,    // durable
 		a.Exchange.AutoDelete, // delete when complete
 		a.Exchange.Internal,   // internal
 		a.Exchange.NoWait,     // noWait
-		nil,                   // arguments
-	)
-	if err != nil {
-		log.Println("Exchange Declare: %s", err)
-	}
-
-	queue, err := channel.QueueDeclare(
-		a.Queue.Name,       // name of the queue
-		a.Queue.Durable,    // durable
-		a.Queue.AutoDelete, // delete when unused
-		a.Queue.Exclusive,  // exclusive
-		a.Queue.NoWait,     // noWait
-		nil,                // arguments
-	)
-	if err != nil {
-		log.Println("Queue Declare: %s", err)
-	}
-
-	err = channel.QueueBind(
-		queue.Name,      // name of the queue
-		a.Queue.BindKey, // bindingKey
-		a.Exchange.Name, // sourceExchange
-		a.Queue.NoWait,  // noWait
-		nil,             // arguments
-	)
-	if err != nil {
-		log.Println("Queue Bind: %s", err)
-	}
-
-	msgs, err := channel.Consume(
-		a.Queue.Name, // name
-		"",           // consumerTag,
-		true,         // noAck
-		false,        // exclusive
-		false,        // noLocal
-		false,        // noWait
-		nil,          // arguments
-	)
-	if err != nil {
-		log.Println("Queue Consume: %s", err)
-	}
-	forever := make(chan bool)
-	for d := range msgs {
-		go f(d)
-	}
-	<-forever
-}
-
-func (a *Amqp) Public(msg string) (err error) {
-	if a.conn == nil {
-		a.connect()
-	}
-	channel, err := a.conn.Channel()
-	if err != nil {
-		return fmt.Errorf("Channel: %s", err)
-	}
-
-	if err := channel.ExchangeDeclare(
-		a.Exchange.Name, // name
-		a.Exchange.Type, // type
-		true,            // durable
-		false,           // auto-deleted
-		false,           // internal
-		false,           // noWait
-		nil,             // arguments
+		a.Exchange.Arguments,              // arguments
 	); err != nil {
 		return fmt.Errorf("Exchange Declare: %s", err)
 	}
@@ -239,6 +195,7 @@ func (a *Amqp) Public(msg string) (err error) {
 	); err != nil {
 		return fmt.Errorf("Exchange Publish: %s", err)
 	}
+	defer a.Close()
 	return err
 }
 func confirmOne(confirms <-chan amqp.Confirmation) {
