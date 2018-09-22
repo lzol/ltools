@@ -1,21 +1,52 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
+	"io/ioutil"
 	"log"
+	"os"
 	"time"
 )
 
 type receive func(d amqp.Delivery)
 
+//json config example
+/*
+{
+	"uri": "amqp://guest:guest@localhost:5672/",
+	"exchange": {
+		"name": "test",
+		"type": "direct",
+		"routingKey": "",
+		"passive": false,
+		"durable": true,
+		"autoDelete": false,
+		"internal": false,
+		"noWait": false,
+		"arguments": null
+	},
+	"queue": {
+		"name": "test",
+		"bindKey": "",
+		"passive": false,
+		"durable": true,
+		"exclusive": false,
+		"autoDelete": false,
+		"noWait": false,
+		"arguments": null
+	},
+	"reconnectInternal": 3
+}*/
+
 type Amqp struct {
-	URI      string //amqp://guest:guest@localhost:5672/
-	Exchange Exchange
-	Queue    Queue
-	conn     *amqp.Connection
-	channel  *amqp.Channel
-	ReconnectInternal int64	//reconnect when MQ lost,unit second
+	URI               string   `json:"uri"` //amqp://guest:guest@localhost:5672/
+	Exchange          Exchange `json:"exchange"`
+	Queue             Queue    `json:"queue"`
+	conn              *amqp.Connection
+	channel           *amqp.Channel
+	ReconnectInternal int64 `json:"reconnectInternal"` //reconnect when MQ lost,unit second
 }
 
 // direct|fanout|topic|x-custom
@@ -25,27 +56,48 @@ const EXCHANGE_TYPE_TOPIC_ string = "topic"
 const EXCHANGE_TYPE_XCUSTOM string = "x-custom"
 
 type Exchange struct {
-	Name       string     //exchange name
-	Type       string     //exchange type
-	RoutingKey string     //queue routing key
-	Passive    bool       //exchange passive
-	Durable    bool       //exchange durable
-	AutoDelete bool       //exchange autodelete
-	Internal   bool       //exchange internal
-	NoWait     bool       //exchange nowait
-	Arguments  amqp.Table //exchange arguments
+	Name       string     `json:"name"`       //exchange name
+	Type       string     `json:"type"`       //exchange type
+	RoutingKey string     `json:"routingKey"` //queue routing key
+	Passive    bool       `json:"passive"`    //exchange passive
+	Durable    bool       `json:"durable"`    //exchange durable
+	AutoDelete bool       `json:"autoDelete"` //exchange autodelete
+	Internal   bool       `json:"internal"`   //exchange internal
+	NoWait     bool       `json:"noWait"`     //exchange nowait
+	Arguments  amqp.Table `json:"arguments"`  //exchange arguments
 }
 
 type Queue struct {
-	Name    string //queue name
-	BindKey string //queue binding key
+	Name       string     `json:"name"`       //queue name
+	BindKey    string     `json:"bindKey"`    //queue binding key
+	Passive    bool       `json:"passive"`    //queue passive
+	Durable    bool       `json:"durable"`    //queue durable
+	Exclusive  bool       `json:"exclusive"`  //queue exclusive
+	AutoDelete bool       `json:"autoDelete"` //queue autodelete
+	NoWait     bool       `json:"noWait"`     //queue nowait
+	Arguments  amqp.Table `json:"arguments"`  //queue arguments
+}
 
-	Passive    bool       //queue passive
-	Durable    bool       //queue durable
-	Exclusive  bool       //queue exclusive
-	AutoDelete bool       //queue autodelete
-	NoWait     bool       //queue nowait
-	Arguments  amqp.Table //queue arguments
+func (a *Amqp) InitByJsonFile(jsonFile string)(amqp *Amqp,err error){
+
+	f,err := os.Open(jsonFile)
+	if err!=nil{
+		log.Println("init json file failed,",err)
+		return a,err
+	}
+	b,err := ioutil.ReadAll(f)
+	if err!=nil{
+		if err!=nil{
+			log.Println("init json file failed,",err)
+			return a,err
+		}
+	}
+	err = json.Unmarshal(b,a)
+	if err!=nil{
+		log.Println("init by json failed,",err)
+		return a,err
+	}
+	return a,nil
 }
 
 func (a *Amqp) getChannel() (*amqp.Channel, error) {
@@ -66,7 +118,7 @@ func (a *Amqp) getChannel() (*amqp.Channel, error) {
 		a.Exchange.AutoDelete, // delete when complete
 		a.Exchange.Internal,   // internal
 		a.Exchange.NoWait,     // noWait
-		a.Exchange.Arguments,              // arguments
+		a.Exchange.Arguments,  // arguments
 	)
 	if err != nil {
 		log.Println("Exchange Declare: %s", err)
@@ -78,7 +130,7 @@ func (a *Amqp) getChannel() (*amqp.Channel, error) {
 		a.Queue.AutoDelete, // delete when unused
 		a.Queue.Exclusive,  // exclusive
 		a.Queue.NoWait,     // noWait
-		a.Queue.Arguments,                // arguments
+		a.Queue.Arguments,  // arguments
 	)
 	if err != nil {
 		log.Println("Queue Declare: %s", err)
@@ -101,7 +153,6 @@ func (a *Amqp) connect() (err error) {
 		log.Println("connect to MQ error:", err)
 	}
 	a.conn = conn
-
 	if err == nil {
 		log.Println("connect to MQ:", a.URI, " success")
 	}
@@ -118,7 +169,7 @@ RECONNECT:
 		channel, err := a.getChannel()
 		if err != nil {
 			log.Println("connect to MQ error,reconnect")
-			time.Sleep(time.Duration(a.ReconnectInternal)*time.Second)
+			time.Sleep(time.Duration(a.ReconnectInternal) * time.Second)
 			continue RECONNECT
 		}
 		a.channel = channel
@@ -163,7 +214,7 @@ func (a *Amqp) Public(msg string) (err error) {
 		a.Exchange.AutoDelete, // delete when complete
 		a.Exchange.Internal,   // internal
 		a.Exchange.NoWait,     // noWait
-		a.Exchange.Arguments,              // arguments
+		a.Exchange.Arguments,  // arguments
 	); err != nil {
 		return fmt.Errorf("Exchange Declare: %s", err)
 	}

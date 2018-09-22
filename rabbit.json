@@ -1,0 +1,25 @@
+{
+  "uri": "amqp://guest:guest@localhost:5672/",
+  "exchange": {
+    "name": "test",
+    "type": "direct",
+    "routingKey": "",
+    "passive": false,
+    "durable": true,
+    "autoDelete": false,
+    "internal": false,
+    "noWait": false,
+    "arguments": null
+  },
+  "queue": {
+    "name": "test",
+    "bindKey": "",
+    "passive": false,
+    "durable": true,
+    "exclusive": false,
+    "autoDelete": false,
+    "noWait": false,
+    "arguments": null
+  },
+  "reconnectInternal": 3
+}
