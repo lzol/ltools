@@ -2,7 +2,6 @@ package redis
 
 import (
 	"github.com/astaxie/beego/cache"
-	"github.com/astaxie/beego/cache/redis"
 	_ "github.com/astaxie/beego/cache/redis"
 	"io/ioutil"
 	"log"
@@ -35,7 +34,6 @@ func InitByJson(jsonFile string) (err error) {
 			return  err
 		}
 	}
-	redis.DefaultKey = "liuz"
 	confStr := string(b)
 	redisConn, err = cache.NewCache("redis", confStr)
 	if err != nil {
