@@ -14,7 +14,7 @@ func main() {
 		fmt.Println(err)
 	}
 	bm := redis2.GetRedisConn()
-	err = bm.Put("sex1","male111",23*time.Second)
+	err = bm.Put("sex2","msl",23*time.Second)
 	if err!=nil{
 		fmt.Println(err)
 	}

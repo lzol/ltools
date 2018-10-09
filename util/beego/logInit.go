@@ -5,7 +5,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/orm"
-	"os"
 )
 
 type logConfigJson struct {
@@ -28,10 +27,10 @@ func init() {
 
 
 
-	logOrmFile := beego.AppConfig.String("logOrmFile")
-	f, _ := os.OpenFile(logOrmFile, os.O_WRONLY|os.O_CREATE|os.O_SYNC,0755)
-	os.Stdout = f
-	os.Stderr = f
+	//logOrmFile := beego.AppConfig.String("logOrmFile")
+	//f, _ := os.OpenFile(logOrmFile, os.O_WRONLY|os.O_CREATE|os.O_SYNC,0755)
+	//os.Stdout = f
+	//os.Stderr = f
 	//w := bufio.NewWriter(f)
 	//defer w.Flush()
 	//orm.DebugLog = orm.NewLog(w)
