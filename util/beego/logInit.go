@@ -7,7 +7,7 @@ import (
 	"github.com/astaxie/beego/orm"
 )
 
-type LogConfigJson struct {
+type ConfigJson struct {
 	FileName string `json:"filename"`
 	Level    int    `json:"level"`
 	MaxLines int    `json:"maxlines"`
@@ -15,7 +15,7 @@ type LogConfigJson struct {
 }
 
 func init() {
-	logConfig := LogConfigJson{}
+	logConfig := ConfigJson{}
 	logConfig.FileName = beego.AppConfig.String("logFile")
 	logConfig.Level, _ = beego.AppConfig.Int("logLevel")
 	logConfig.MaxLines, _ = beego.AppConfig.Int("logMaxLines")
