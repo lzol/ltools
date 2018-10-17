@@ -201,7 +201,7 @@ RECONNECT:
 	}
 }
 
-func (a *Amqp) Public(msg string) (err error) {
+func (a *Amqp) Public(msg string, headers amqp.Table) (err error) {
 	channel, err := a.getChannel()
 	if err != nil {
 		return fmt.Errorf("Channel: %s", err)
@@ -235,7 +235,7 @@ func (a *Amqp) Public(msg string) (err error) {
 		false,                 // mandatory
 		false,                 // immediate
 		amqp.Publishing{
-			Headers:         amqp.Table{},
+			Headers:         headers,
 			ContentType:     "text/plain",
 			ContentEncoding: "",
 			Body:            []byte(msg),
@@ -249,6 +249,9 @@ func (a *Amqp) Public(msg string) (err error) {
 	defer a.Close()
 	return err
 }
+
+
+
 func confirmOne(confirms <-chan amqp.Confirmation) {
 	log.Printf("waiting for confirmation of one publishing")
 

@@ -59,7 +59,7 @@ func main() {
 	amqp := new(util.Amqp)
 	amqp,err := amqp.InitByJsonFile("rabbit.json")
 
-	err = amqp.Public("sfdljdsfldsjfls")
+	err = amqp.Public("sfdljdsfldsjfls",nil)
 	fmt.Println("发布队列消息：sfdljdsfldsjfls.", err)
 	jsonStr, err := json.Marshal(amqp)
 	fmt.Println(string(jsonStr))

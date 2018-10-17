@@ -44,3 +44,16 @@ func (t *IniFile)GetStringValue(section string,key string)(value string){
 	}
 	return ret
 }
+
+func (t *IniFile)GetBoolValue(section string,key string)(value bool){
+	v,err := t.cfg.Section(section).GetKey(key)
+	if err!=nil{
+		fmt.Printf("Fail to get value: %v%v%v", section,key,err)
+	}
+	ret,err := v.Bool()
+	if err!=nil{
+		fmt.Printf("Fail to get value: %v%v%v", section,key,err)
+	}
+	return ret
+}
+

@@ -14,7 +14,7 @@ type ConfigJson struct {
 	MaxDays  int    `json:"maxdays"`
 }
 
-func init() {
+func Init() {
 	logConfig := ConfigJson{}
 	logConfig.FileName = beego.AppConfig.String("logFile")
 	logConfig.Level, _ = beego.AppConfig.Int("logLevel")
@@ -23,6 +23,7 @@ func init() {
 	b, _ := json.Marshal(logConfig)
 	s := string(b)
 	beego.SetLogger(logs.AdapterMultiFile, s)
+
 
 
 
