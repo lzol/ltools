@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 )
 
 /*
@@ -50,3 +51,8 @@ func GetString(key string)(value string){
 	v := redisConn.Get(key)
 	return string(v.([]byte))
 }
+
+func Put(key string,value interface{},duration time.Duration)(err error){
+	return redisConn.Put(key,value,duration)
+}
+
