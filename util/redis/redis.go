@@ -45,3 +45,8 @@ func InitByJson(jsonFile string) (err error) {
 func GetRedisConn()(cache.Cache){
 	return redisConn
 }
+
+func GetString(key string)(value string){
+	v := redisConn.Get(key)
+	return string(v.([]byte))
+}
