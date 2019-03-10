@@ -102,3 +102,14 @@ func IsLastDayOfYear(pattern string, inputDate string) bool {
 		return tm.Year() == tm1.Year()
 	}
 }
+
+func AddTime(pattern string,inputDate string,duration time.Duration) (result string,err error){
+	tm, err := ConverStrToDate(pattern, inputDate)
+	result = ""
+	if err != nil {
+		return result,err
+	} else {
+		tm1 := tm.Add(duration)
+		return tm1.Format(pattern),nil
+	}
+}
