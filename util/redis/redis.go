@@ -40,7 +40,7 @@ func InitByJson(jsonFile string) (err error) {
 	if err != nil {
 		log.Println("init err:", err)
 	}
-	return  nil
+	return err 
 }
 
 func GetRedisConn()(cache.Cache){
