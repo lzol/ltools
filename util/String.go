@@ -13,6 +13,14 @@ const (
 	GB18030 = "GB18030"
 )
 
+func IsEmptyString(s string)bool{
+	if strings.Trim(s," ")==""{
+		return true
+	}else{
+		return false
+	}
+}
+
 /*
   字符串编码转换
 */
