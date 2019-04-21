@@ -6,11 +6,11 @@ import (
 	"encoding/base64"
 )
 
-func AesEncrypt(orig string, key string) string {
+func AesEncrypt(orig, key, iv string) string {
 	// 转成字节数组
 	origData := []byte(orig)
 	k := []byte(key)
-
+	IV := []byte(iv)
 	// 分组秘钥
 	block, _ := aes.NewCipher(k)
 	// 获取秘钥块的长度
@@ -18,28 +18,24 @@ func AesEncrypt(orig string, key string) string {
 	// 补全码
 	origData = PKCS7Padding(origData, blockSize)
 	// 加密模式
-	blockMode := cipher.NewCBCEncrypter(block, k[:blockSize])
+	blockMode := cipher.NewCBCEncrypter(block, IV)
 	// 创建数组
 	cryted := make([]byte, len(origData))
 	// 加密
 	blockMode.CryptBlocks(cryted, origData)
-
 	return base64.StdEncoding.EncodeToString(cryted)
 
 }
 
-
-func AesDecrypt(cryted string, key string) string {
+func AesDecrypt(cryted, key,iv string) string {
 	// 转成字节数组
 	crytedByte, _ := base64.StdEncoding.DecodeString(cryted)
 	k := []byte(key)
-
+	IV := []byte(iv)
 	// 分组秘钥
 	block, _ := aes.NewCipher(k)
-	// 获取秘钥块的长度
-	blockSize := block.BlockSize()
 	// 加密模式
-	blockMode := cipher.NewCBCDecrypter(block, k[:blockSize])
+	blockMode := cipher.NewCBCDecrypter(block, IV)
 	// 创建数组
 	orig := make([]byte, len(crytedByte))
 	// 解密

@@ -13,7 +13,9 @@ func TripleDesEncrypt(orig, key string) string {
 	// 转成字节数组
 	origData := []byte(orig)
 	k := []byte(key)
-
+	if len(k)!=24{
+		panic("secret key must be 24 bit")
+	}
 	// 3DES的秘钥长度必须为24位
 	block, _ := des.NewTripleDESCipher(k)
 	// 补全码
@@ -31,12 +33,14 @@ func TripleDesEncrypt(orig, key string) string {
 /**
  * 解密
  */
-func TipleDesDecrypt(crypted string, key string) string {
+func TripleDesDecrypt(crypted string, key string) string {
 	// 用base64转成字节数组
 	cryptedByte, _ := base64.StdEncoding.DecodeString(crypted)
 	// key转成字节数组
 	k := []byte(key)
-
+	if len(k)!=24{
+		panic("secret key must be 24 bit")
+	}
 	block, _ := des.NewTripleDESCipher(k)
 	blockMode := cipher.NewCBCDecrypter(block, k[:8])
 	origData := make([]byte, len(cryptedByte))
