@@ -49,4 +49,7 @@ func main(){
 	// 第二种调用方法
 	h := secret.Sha256WithSalt("hello world","aabbdssdfdsfdsssssssss")
 	fmt.Printf("%x\n", h)
+	fmt.Println(secret.Md5(h))
+
+
 }

@@ -15,3 +15,4 @@ func Get32UUID()(string,error){
 	uuid := strings.Replace(id.String(),"-","",-1)
 	return uuid,err
 }
+

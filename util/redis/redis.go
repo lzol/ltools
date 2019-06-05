@@ -40,7 +40,11 @@ func InitByJson(jsonFile string) (err error) {
 	if err != nil {
 		log.Println("init err:", err)
 	}
-	return err 
+	return err
+}
+
+func Exist(key string)bool{
+	return redisConn.IsExist(key)
 }
 
 func GetRedisConn()(cache.Cache){
@@ -56,3 +60,11 @@ func Put(key string,value interface{},duration time.Duration)(err error){
 	return redisConn.Put(key,value,duration)
 }
 
+func GetAndIncr(key string)(value string,err error){
+	value = GetString(key)
+	err = redisConn.Incr(key)
+	if err!=nil{
+		return value,err
+	}
+	return value,nil
+}
